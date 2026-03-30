@@ -1,6 +1,19 @@
 from fastapi import FastAPI
 from pydantic import BaseModel
 
+from app.db.database import engine
+
+# TESTING
+try:
+    connection = engine.connect()
+    print("Database connection successful!")
+    connection.close()
+except Exception as e:
+    print(f"Database connection failed: {e}")
+
+
+
+
 app = FastAPI()
 
 
@@ -21,3 +34,6 @@ def read_item(item_id: int, q: None = None):
 @app.put("/items/{item_id}")
 def update_item(item_id: int, item: Item):
     return {"item_name": item.name, "item_id": item_id}
+
+
+

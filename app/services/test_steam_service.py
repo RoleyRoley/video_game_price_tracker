@@ -4,7 +4,7 @@ from app.services.steam_service import SteamService
 
 steam = SteamService()
 
-results = steam.search_games("elden ring", limit=5)
+results = steam.search_games("cuphead", limit=5)
 print("SEARCH RESULTS:")
 for game in results:
     print(game)

@@ -1,7 +1,9 @@
 from fastapi import FastAPI
 from pydantic import BaseModel
 
+
 from app.db.database import engine
+from app.routes.games import router as games_router
 
 # TESTING
 try:
@@ -14,26 +16,15 @@ except Exception as e:
 
 
 
-app = FastAPI()
+app = FastAPI(title="Game Price Tracker")
 
-
-class Item(BaseModel):
-    name: str
-    price: float
-    is_offer: bool | None = None
-
+app.include_router(games_router)
 
 @app.get("/")
-def read_root():
-    return {"Hello": "World"}
+def root():
+    return {"message": "Game Price Tracker API is running"}
 
-@app.get("/items/{item_id}")
-def read_item(item_id: int, q: None = None):
-    return {"item_id": item_id, "q": q}
 
-@app.put("/items/{item_id}")
-def update_item(item_id: int, item: Item):
-    return {"item_name": item.name, "item_id": item_id}
 
 
 

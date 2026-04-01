@@ -11,6 +11,9 @@ DATABASE_URL = os.getenv("DATABASE_URL")
 
 engine = create_engine(DATABASE_URL)
 
-sessionlocal = sessionmaker(bind=engine)
+SessionLocal = sessionmaker(bind=engine)
+
+# Backward-compatible alias for any existing lowercase imports.
+sessionlocal = SessionLocal
 
 Base = declarative_base()

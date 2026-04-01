@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Search Results</title>
+</head>
+<body>
+    <h1>Search Results</h1>
+
+    <p>Results for: <strong>{{ query }}</strong></p>
+
+    {% if results %}
+        <ul>
+            {% for game in results %}
+                <li>
+                    {{ game.name }} (App ID: {{ game.appid }})
+                    <form action="/track-page" method="post" style="display:inline;">
+                        <input type="hidden" name="steam_app_id" value="{{ game.appid }}">
+                        <button type="submit">Track</button>
+                    </form>
+                </li>
+            {% endfor %}
+        </ul>
+    {% else %}
+        <p>No results found.</p>
+    {% endif %}
+
+    <br>
+    <a href="/">Back to Search</a>
+</body>
+</html>

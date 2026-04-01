@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tracked Games</title>
+</head>
+<body>
+    <h1>Tracked Games</h1>
+
+    {% if tracked_games %}
+        <ul>
+            {% for game in tracked_games %}
+                <li>
+                    <strong>{{ game.name }}</strong><br>
+                    Steam App ID: {{ game.steam_app_id }}<br>
+                    <a href="{{ game.steam_url }}" target="_blank">Steam Page</a><br>
+
+                    {% if game.latest_price %}
+                        Current Price:
+                        {% if game.latest_price.final_price is not none %}
+                            £{{ "%.2f"|format(game.latest_price.final_price / 100) }}
+                        {% else %}
+                            N/A
+                        {% endif %}
+                        <br>
+
+                        Discount: {{ game.latest_price.discount_percent }}%<br>
+                        Currency: {{ game.latest_price.currency }}<br>
+                        Checked At: {{ game.latest_price.checked_at }}
+                    {% else %}
+                        No price history available.
+                    {% endif %}
+                </li>
+                <br>
+            {% endfor %}
+        </ul>
+    {% else %}
+        <p>No tracked games yet.</p>
+    {% endif %}
+
+    <br>
+    <a href="/">Back to Search</a>
+</body>
+</html>

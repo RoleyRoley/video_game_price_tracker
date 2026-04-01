@@ -1,4 +1,6 @@
-from fastapi import APIRouter, HTTPException, Depends
+from fastapi import APIRouter, HTTPException, Depends, Request, Form, status
+from fastapi.responses import RedirectResponse
+from fastapi.templating import Jinja2Templates
 from sqlalchemy.orm import Session
 
 from app.db.database import SessionLocal
@@ -10,6 +12,7 @@ from app.services.game_service import save_game_and_price
 # Initialize the API router and Steam service
 router = APIRouter()
 steam_service = SteamService()
+templates = Jinja2Templates(directory="app/templates")
 
 def get_db():
     # Dependency to get a database session
@@ -32,6 +35,23 @@ def search_games(query: str):
         "query": query,
         "results": results
     }
+
+
+@router.post("/search-page")
+def search_games_page(request: Request, query: str = Form(...)):
+    if not query or not query.strip():
+        return templates.TemplateResponse(
+            request=request,
+            name="search_results.html",
+            context={"request": request, "query": query, "results": []}
+        )
+
+    results = steam_service.search_games(query=query.strip(), limit=10)
+    return templates.TemplateResponse(
+        request=request,
+        name="search_results.html",
+        context={"request": request, "query": query, "results": results}
+    )
     
 @router.post("/track")
 def track_game(steam_app_id: int, db: Session = Depends(get_db)):
@@ -63,6 +83,16 @@ def track_game(steam_app_id: int, db: Session = Depends(get_db)):
             
         }
     }
+
+
+@router.post("/track-page")
+def track_game_page(steam_app_id: int = Form(...), db: Session = Depends(get_db)):
+    game_details = steam_service.get_game_details(steam_app_id)
+    if not game_details:
+        raise HTTPException(status_code=404, detail="Game not found on Steam.")
+
+    save_game_and_price(db, game_details)
+    return RedirectResponse(url="/tracked-games-page", status_code=status.HTTP_303_SEE_OTHER)
     
 @router.get("/tracked-games")
 # Retrieve all tracked games with their latest price info.
@@ -91,13 +121,45 @@ def get_tracked_games(db: Session = Depends(get_db)):
                 "final_price": latest_price.final_price if latest_price else None,
                 "discount_percent": latest_price.discount_percent if latest_price else None,
                 "currency": latest_price.currency if latest_price else None,
-                "checked_at": latest_price.checked_at if latest_price else None
+                "checked_at": latest_price.checked_at if latest_price else None,
             }
         })
     
     # Return the list of tracked games with their latest price info.
     return {
-        
         "count": len(tracked_games),
         "tracked_games": tracked_games
     }
+
+
+@router.get("/tracked-games-page")
+def tracked_games_page(request: Request, db: Session = Depends(get_db)):
+    games = db.query(Game).all()
+    tracked_games = []
+
+    for game in games:
+        latest_price = (
+            db.query(PriceHistory)
+            .filter(PriceHistory.game_id == game.id)
+            .order_by(PriceHistory.checked_at.desc())
+            .first()
+        )
+        tracked_games.append({
+            "id": game.id,
+            "steam_app_id": game.steam_app_id,
+            "name": game.name,
+            "steam_url": game.steam_url,
+            "latest_price": {
+                "initial_price": latest_price.initial_price if latest_price else None,
+                "final_price": latest_price.final_price if latest_price else None,
+                "discount_percent": latest_price.discount_percent if latest_price else None,
+                "currency": latest_price.currency if latest_price else None,
+                "checked_at": latest_price.checked_at if latest_price else None,
+            },
+        })
+
+    return templates.TemplateResponse(
+        request=request,
+        name="tracked_games.html",
+        context={"request": request, "tracked_games": tracked_games}
+    )

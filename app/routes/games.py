@@ -7,7 +7,8 @@ from app.db.database import SessionLocal
 from app.models.game import Game
 from app.models.price_history import PriceHistory
 from app.services.steam_service import SteamService
-from app.services.game_service import save_game_and_price
+from app.services.game_service import save_game_and_price, get_game_by_id, recheck_game_price
+
 
 # Initialize the API router and Steam service
 router = APIRouter()
@@ -163,3 +164,25 @@ def tracked_games_page(request: Request, db: Session = Depends(get_db)):
         name="tracked_games.html",
         context={"request": request, "tracked_games": tracked_games}
     )
+
+@router.post("/recheck-price/{game_id}")
+@router.post("/recheck/{game_id}")
+def recheck_game(game_id: int, db: Session = Depends(get_db)):
+    
+    game = get_game_by_id(db, game_id)
+    
+    # If the game is not found in the database, return a 404 error response.
+    if not game:
+        raise HTTPException(status_code=404, detail="Game not found")
+
+    # Fetch the latest game details from Steam using the game's Steam app ID.
+    game_details = steam_service.get_game_details(game.steam_app_id)
+
+    # If the game details could not be fetched from Steam, return a 404 error response.
+    if not game_details:
+        raise HTTPException(status_code=404, detail="Could not fetch latest Steam data")
+
+    # Update the game's price information in the database and create a new price history record.
+    recheck_game_price(db, game_id, game_details)
+
+    return RedirectResponse(url="/tracked-games-page", status_code=303)

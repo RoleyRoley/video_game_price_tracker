@@ -31,6 +31,9 @@
                     {% else %}
                         No price history available.
                     {% endif %}
+                    <form action="/recheck-price/{{ game.id }}" method="post">
+                        <button type="submit">Recheck Price</button>
+                    </form>
                 </li>
                 <br>
             {% endfor %}

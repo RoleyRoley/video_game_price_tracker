@@ -8,6 +8,7 @@ from app.models.game import Game
 from app.models.price_history import PriceHistory
 from app.services.steam_service import SteamService
 from app.services.game_service import save_game_and_price, get_game_by_id, recheck_game_price
+from app.services.price_service import get_latest_two_prices, calculate_price_change
 
 
 # Initialize the API router and Steam service
@@ -134,35 +135,38 @@ def get_tracked_games(db: Session = Depends(get_db)):
 
 
 @router.get("/tracked-games-page")
-def tracked_games_page(request: Request, db: Session = Depends(get_db)):
+def get_tracked_games_page(request: Request, db: Session = Depends(get_db)):
     games = db.query(Game).all()
+
     tracked_games = []
 
     for game in games:
-        latest_price = (
-            db.query(PriceHistory)
-            .filter(PriceHistory.game_id == game.id)
-            .order_by(PriceHistory.checked_at.desc())
-            .first()
-        )
+        latest_prices = get_latest_two_prices(db, game.id)
+
+        latest_price = latest_prices[0] if len(latest_prices) > 0 else None
+        previous_price = latest_prices[1] if len(latest_prices) > 1 else None
+
+        price_change = None
+        if latest_price and previous_price:
+            price_change = calculate_price_change(
+                previous_price.final_price,
+                latest_price.final_price
+            )
+
         tracked_games.append({
             "id": game.id,
             "steam_app_id": game.steam_app_id,
             "name": game.name,
             "steam_url": game.steam_url,
-            "latest_price": {
-                "initial_price": latest_price.initial_price if latest_price else None,
-                "final_price": latest_price.final_price if latest_price else None,
-                "discount_percent": latest_price.discount_percent if latest_price else None,
-                "currency": latest_price.currency if latest_price else None,
-                "checked_at": latest_price.checked_at if latest_price else None,
-            },
+            "latest_price": latest_price,
+            "previous_price": previous_price,
+            "price_change": price_change
         })
 
     return templates.TemplateResponse(
         request=request,
         name="tracked_games.html",
-        context={"request": request, "tracked_games": tracked_games}
+        context={"tracked_games": tracked_games}
     )
 
 @router.post("/recheck-price/{game_id}")

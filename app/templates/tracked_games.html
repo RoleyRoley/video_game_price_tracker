@@ -14,7 +14,7 @@
                 <li>
                     <strong>{{ game.name }}</strong><br>
                     Steam App ID: {{ game.steam_app_id }}<br>
-                    <a href="{{ game.steam_url }}" target="_blank">Steam Page</a><br>
+                    <a href="{{ game.steam_url }}" target="_blank">Steam Page</a><br><br>
 
                     {% if game.latest_price %}
                         Current Price:
@@ -27,15 +27,30 @@
 
                         Discount: {{ game.latest_price.discount_percent }}%<br>
                         Currency: {{ game.latest_price.currency }}<br>
-                        Checked At: {{ game.latest_price.checked_at }}
+                        Checked At: {{ game.latest_price.checked_at }}<br>
                     {% else %}
-                        No price history available.
+                        No price history available.<br>
                     {% endif %}
-                    <form action="/recheck-price/{{ game.id }}" method="post">
-                        <button type="submit">Recheck Price</button>
+
+                    {% if game.previous_price %}
+                        Previous Price:
+                        £{{ "%.2f"|format(game.previous_price.final_price / 100) }}<br>
+                    {% endif %}
+
+                    {% if game.price_change %}
+                        Price Difference:
+                        £{{ "%.2f"|format(game.price_change.difference / 100) }}<br>
+
+                        Percentage Change:
+                        {{ game.price_change.percentage_change }}%<br>
+                    {% endif %}
+
+                    <br>
+                    <form action="/recheck/{{ game.id }}" method="post">
+                        <button type="submit">Re-check Price</button>
                     </form>
                 </li>
-                <br>
+                <br><br>
             {% endfor %}
         </ul>
     {% else %}

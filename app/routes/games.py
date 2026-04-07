@@ -6,14 +6,18 @@ from sqlalchemy.orm import Session
 from app.db.database import SessionLocal
 from app.models.game import Game
 from app.models.price_history import PriceHistory
+
+# Import services
 from app.services.steam_service import SteamService
 from app.services.game_service import save_game_and_price, get_game_by_id, recheck_game_price
 from app.services.price_service import get_latest_two_prices, calculate_price_change
+from app.services.loaded_service import LoadedService
 
 
 # Initialize the API router and Steam service
 router = APIRouter()
 steam_service = SteamService()
+loaded_service = LoadedService()
 templates = Jinja2Templates(directory="app/templates")
 
 def get_db():
@@ -153,6 +157,21 @@ def get_tracked_games_page(request: Request, db: Session = Depends(get_db)):
                 latest_price.final_price
             )
 
+        # 🔥 NEW: Try Loaded lookup
+        loaded_price = None
+
+        try:
+            # simple approach: search by name (you can refine later)
+            search_results = loaded_service.search_games(game.name)
+
+            if search_results:
+                first_result = search_results[0]
+                loaded_details = loaded_service.get_game_details(first_result["url"])
+                loaded_price = loaded_details
+
+        except Exception as e:
+            print(f"[Loaded] Error fetching price for {game.name}: {e}")
+
         tracked_games.append({
             "id": game.id,
             "steam_app_id": game.steam_app_id,
@@ -160,7 +179,8 @@ def get_tracked_games_page(request: Request, db: Session = Depends(get_db)):
             "steam_url": game.steam_url,
             "latest_price": latest_price,
             "previous_price": previous_price,
-            "price_change": price_change
+            "price_change": price_change,
+            "loaded_price": loaded_price
         })
 
     return templates.TemplateResponse(

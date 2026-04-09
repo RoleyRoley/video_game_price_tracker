@@ -1,12 +1,12 @@
 # Game Price Tracker
 
-A web application for tracking Steam game prices over time. Search for games on Steam, add them to your watchlist, and monitor price changes — including discounts — with an automatically updating price history.
+A web application for tracking game prices on various sites over time. Search for games, add them to your watchlist, and monitor price changes — including discounts — with an automatically updating price history.
 
 ---
 
 ## Features
 
-- **Game Search** — Search the Steam store by title and browse results
+- **Game Search** — Search by title and browse results
 - **Price Tracking** — Track a game's current price, original price, and active discount percentage
 - **Price History** — Stores a full history of price snapshots per game with timestamps
 - **Price Change Calculation** — Compares the two most recent price records and surfaces the difference and percentage change

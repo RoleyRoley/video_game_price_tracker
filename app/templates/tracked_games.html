@@ -1,103 +1,144 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Tracked Games</title>
-</head>
-<body>
+{% extends "base.html" %}
 
-    <h1>Tracked Games</h1>
+{% block title %}Tracked Games | Game Price Tracker{% endblock %}
+{% block nav_tracked %}active{% endblock %}
 
-    {% if tracked_games %}
-        {% for game in tracked_games %}
-            <div class="game-card">
+{% block content %}
+<section class="hero">
+    <h1 class="hero-title">Tracked games</h1>
+    <p class="hero-subtitle">
+        Monitor current prices, compare stores, and re-check titles to build a continuous price history.
+    </p>
+</section>
 
-                <h2>{{ game.name }}</h2>
-
-                <p>
-                    Steam App ID: {{ game.steam_app_id }}<br>
-                    <a href="{{ game.steam_url }}" target="_blank">View on Steam</a>
-                </p>
-
-                <!-- Steam Price -->
-                {% if game.latest_price %}
-                    <p>
-                        <strong>Steam Price:</strong>
-                        {% if game.latest_price.final_price is not none %}
-                            £{{ "%.2f"|format(game.latest_price.final_price / 100) }}
-                        {% else %}
-                            N/A
-                        {% endif %}
-                        <br>
-
-                        Discount: {{ game.latest_price.discount_percent }}%<br>
-                        Checked: {{ game.latest_price.checked_at }}
-                    </p>
-                {% else %}
-                    <p>No Steam price available.</p>
-                {% endif %}
-
-                <!-- Loaded Price -->
-                {% if game.loaded_price %}
-                    <p>
-                        <strong>Loaded Price:</strong>
-                        £{{ "%.2f"|format(game.loaded_price.price / 100) }}<br>
-                        <a href="{{ game.loaded_price.url }}" target="_blank">View on Loaded</a>
-                    </p>
-                {% else %}
-                    <p>Loaded Price: Not found</p>
-                {% endif %}
-
-                <!-- Best Price -->
-                {% if game.loaded_price and game.latest_price %}
-                    <p>
-                        <strong>Best Price:</strong>
-
-                        {% if game.loaded_price.price < game.latest_price.final_price %}
-                            <span class="price-good">
-                                Loaded (£{{ "%.2f"|format(game.loaded_price.price / 100) }})
-                            </span>
-                        {% else %}
-                            <span class="price-good">
-                                Steam (£{{ "%.2f"|format(game.latest_price.final_price / 100) }})
-                            </span>
-                        {% endif %}
-                    </p>
-                {% endif %}
-
-                <!-- Previous Price -->
-                {% if game.previous_price %}
-                    <p>
-                        Previous Price:
-                        £{{ "%.2f"|format(game.previous_price.final_price / 100) }}
-                    </p>
-                {% endif %}
-
-                <!-- Price Change -->
-                {% if game.price_change %}
-                    <p>
-                        Change:
-                        <span class="{% if game.price_change.difference < 0 %}price-good{% else %}price-bad{% endif %}">
-                            £{{ "%.2f"|format(game.price_change.difference / 100) }}
-                        </span>
-                        ({{ game.price_change.percentage_change }}%)
-                    </p>
-                {% endif %}
-
-                <!-- Re-check Button -->
-                <form action="/recheck/{{ game.id }}" method="post">
-                    <button type="submit">Re-check Price</button>
-                </form>
-
+<section class="panel">
+    <div class="panel-inner">
+        <div class="section-header">
+            <div>
+                <h2 class="section-title">Your watchlist</h2>
+                <p class="section-copy">Steam remains your tracked source, with Loaded shown for live comparison.</p>
             </div>
-        {% endfor %}
-    {% else %}
-        <p>No tracked games yet.</p>
-    {% endif %}
+            <a href="/" class="btn btn-secondary">Search More Games</a>
+        </div>
 
-    <br>
-    <a href="/">← Back to Search</a>
+        {% if tracked_games %}
+            <div class="grid grid-games">
+                {% for game in tracked_games %}
+                    <article class="card">
+                        <h3 class="card-title">{{ game.name }}</h3>
 
-</body>
-</html>
+                        <p class="meta">
+                            Steam App ID: <strong>{{ game.steam_app_id }}</strong><br>
+                            <a href="{{ game.steam_url }}" target="_blank">View on Steam</a>
+                            {% if game.loaded_price %}
+                                &nbsp;•&nbsp;
+                                <a href="{{ game.loaded_price.url }}" target="_blank">View on Loaded</a>
+                            {% endif %}
+                        </p>
+
+                        <div class="price-grid">
+                            <div class="price-box">
+                                <div class="price-label">Steam</div>
+                                <div class="price-value">
+                                    {% if game.latest_price and game.latest_price.final_price is not none %}
+                                        £{{ "%.2f"|format(game.latest_price.final_price / 100) }}
+                                    {% else %}
+                                        N/A
+                                    {% endif %}
+                                </div>
+                                <div class="price-subtext">
+                                    {% if game.latest_price %}
+                                        Discount: {{ game.latest_price.discount_percent }}%
+                                    {% else %}
+                                        No current Steam price
+                                    {% endif %}
+                                </div>
+                            </div>
+
+                            <div class="price-box">
+                                <div class="price-label">Loaded</div>
+                                <div class="price-value">
+                                    {% if game.loaded_price %}
+                                        £{{ "%.2f"|format(game.loaded_price.price / 100) }}
+                                    {% else %}
+                                        N/A
+                                    {% endif %}
+                                </div>
+                                <div class="price-subtext">
+                                    {% if game.loaded_price %}
+                                        Live store comparison
+                                    {% else %}
+                                        No Loaded match found
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="badges">
+                            {% if game.loaded_price and game.latest_price %}
+                                {% if game.loaded_price.price < game.latest_price.final_price %}
+                                    <span class="badge badge-success">
+                                        Best Deal: Loaded
+                                    </span>
+                                {% else %}
+                                    <span class="badge badge-success">
+                                        Best Deal: Steam
+                                    </span>
+                                {% endif %}
+                            {% endif %}
+
+                            {% if game.latest_price and game.latest_price.discount_percent and game.latest_price.discount_percent > 0 %}
+                                <span class="badge badge-warning">
+                                    Steam Discount: {{ game.latest_price.discount_percent }}%
+                                </span>
+                            {% endif %}
+                        </div>
+
+                        <div class="stat-list">
+                            {% if game.latest_price %}
+                                <div class="stat-row">
+                                    <span class="stat-label">Checked</span>
+                                    <span class="stat-value">{{ game.latest_price.checked_at }}</span>
+                                </div>
+                            {% endif %}
+
+                            {% if game.previous_price %}
+                                <div class="stat-row">
+                                    <span class="stat-label">Previous Steam Price</span>
+                                    <span class="stat-value">£{{ "%.2f"|format(game.previous_price.final_price / 100) }}</span>
+                                </div>
+                            {% endif %}
+
+                            {% if game.price_change %}
+                                <div class="stat-row">
+                                    <span class="stat-label">Price Difference</span>
+                                    <span class="stat-value {% if game.price_change.difference < 0 %}positive{% elif game.price_change.difference > 0 %}negative{% endif %}">
+                                        £{{ "%.2f"|format(game.price_change.difference / 100) }}
+                                    </span>
+                                </div>
+
+                                <div class="stat-row">
+                                    <span class="stat-label">Percentage Change</span>
+                                    <span class="stat-value {% if game.price_change.difference < 0 %}positive{% elif game.price_change.difference > 0 %}negative{% endif %}">
+                                        {{ game.price_change.percentage_change }}%
+                                    </span>
+                                </div>
+                            {% endif %}
+                        </div>
+
+                        <div class="actions">
+                            <form action="/recheck/{{ game.id }}" method="post">
+                                <button type="submit" class="btn btn-primary btn-small">Re-check Price</button>
+                            </form>
+                        </div>
+                    </article>
+                {% endfor %}
+            </div>
+        {% else %}
+            <div class="empty-state">
+                You are not tracking any games yet.
+            </div>
+        {% endif %}
+    </div>
+</section>
+{% endblock %}

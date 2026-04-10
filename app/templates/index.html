@@ -1,21 +1,36 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Game Price Tracker</title>
-</head>
-<body>
-    <h1>Game Price Tracker</h1>
+{% extends "base.html" %}
 
-    <h2>Search for a game</h2>
-    <form action="/search-page" method="post">
-        <input type="text" name="query" placeholder="Enter game name" required>
-        <button type="submit">Search</button>
-    </form>
+{% block title %}Search Games | Game Price Tracker{% endblock %}
+{% block nav_home %}active{% endblock %}
 
-    <br>
+{% block content %}
+<section class="hero">
+    <h1 class="hero-title">Track game prices across stores.</h1>
+    <p class="hero-subtitle">
+        Search for a title, track it from Steam, and compare its current price against Loaded in one clean dashboard.
+    </p>
+</section>
 
-    <a href="/tracked-games-page">View Tracked Games</a>
-</body>
-</html>
+<section class="panel search-panel">
+    <div class="panel-inner">
+        <div class="section-header">
+            <div>
+                <h2 class="section-title">Find a game</h2>
+                <p class="section-copy">Start by searching Steam and adding a title to your tracked list.</p>
+            </div>
+            <a href="/tracked-games-page" class="btn btn-secondary">View Tracked Games</a>
+        </div>
+
+        <form action="/search-page" method="post" class="search-form">
+            <input
+                type="text"
+                name="query"
+                class="input"
+                placeholder="Search for a game, e.g. Elden Ring"
+                required
+            >
+            <button type="submit" class="btn btn-primary">Search</button>
+        </form>
+    </div>
+</section>
+{% endblock %}

@@ -1,32 +1,48 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Search Results</title>
-</head>
-<body>
-    <h1>Search Results</h1>
+{% extends "base.html" %}
 
-    <p>Results for: <strong>{{ query }}</strong></p>
+{% block title %}Search Results | Game Price Tracker{% endblock %}
+{% block nav_home %}active{% endblock %}
 
-    {% if results %}
-        <ul>
-            {% for game in results %}
-                <li>
-                    {{ game.name }} (App ID: {{ game.appid }})
-                    <form action="/track-page" method="post" style="display:inline;">
-                        <input type="hidden" name="steam_app_id" value="{{ game.appid }}">
-                        <button type="submit">Track</button>
-                    </form>
-                </li>
-            {% endfor %}
-        </ul>
-    {% else %}
-        <p>No results found.</p>
-    {% endif %}
+{% block content %}
+<section class="hero">
+    <h1 class="hero-title">Search results</h1>
+    <p class="hero-subtitle">
+        Results for <strong>{{ query }}</strong>. Choose the correct game to start tracking its price history.
+    </p>
+</section>
 
-    <br>
-    <a href="/">Back to Search</a>
-</body>
-</html>
+<section class="panel">
+    <div class="panel-inner">
+        <div class="section-header">
+            <div>
+                <h2 class="section-title">Matching titles</h2>
+                <p class="section-copy">Select the title you want to track from the results below.</p>
+            </div>
+        </div>
+
+        {% if results %}
+            <div class="results-list">
+                {% for game in results %}
+                    <article class="card">
+                        <h3 class="card-title">{{ game.name }}</h3>
+                        <p class="meta">Steam App ID: <strong>{{ game.appid }}</strong></p>
+
+                        <div class="actions">
+                            <form action="/track-page" method="post">
+                                <input type="hidden" name="steam_app_id" value="{{ game.appid }}">
+                                <button type="submit" class="btn btn-primary btn-small">Track Game</button>
+                            </form>
+                        </div>
+                    </article>
+                {% endfor %}
+            </div>
+        {% else %}
+            <div class="empty-state">
+                No results found for <strong>{{ query }}</strong>.
+            </div>
+        {% endif %}
+
+        <a href="/" class="footer-link">← Back to Search</a>
+    </div>
+</section>
+{% endblock %}
